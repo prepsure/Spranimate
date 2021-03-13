@@ -1,0 +1,12 @@
+{
+  "name": "Spranimator",
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedStorage": {
+      "Common": {
+        "$path": "src"
+      }
+    }
+  }
+}
