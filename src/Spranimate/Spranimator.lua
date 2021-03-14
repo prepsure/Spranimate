@@ -7,7 +7,7 @@ function Spranimator.new(gui)
 
     local self = setmetatable({}, Spranimator)
 
-    self.Gui = gui or Instance.new("ImageLabel")
+    self.Adornee = gui
     self.ClassName = "Spranimator"
     self.Name = "Spranimator"
 
@@ -19,17 +19,17 @@ function Spranimator.new(gui)
 end
 
 
-function Spranimator:GetPlayingAnimationTracks()
+function Spranimator:GetPlayingSpranimationTracks()
 
 end
 
 
-function Spranimator:LoadAnimation(SpranimationTrack)
-
+function Spranimator:LoadSpranimation(Spranimation)
+    return SpranimationTrack.new(Spranimation)
 end
 
 
-function Spranimator:StepAnimations(dt)
+function Spranimator:StepSpranimations(dt)
 
 end
 
