@@ -5,6 +5,26 @@ local Spranimation = {}
 
 Spranimation.__index = Spranimation
 
+--[[
+local sampleSegmentTable = {
+    {
+        Name = "Seg1",
+        StartFrame = 1,
+        EndFrame = 3,
+        Length = 0.5,
+    },
+    {
+        Name = "Seg2",
+        StartFrame = 4,
+        Length = 1,
+    },
+    {
+        StartFrame = 6,
+        EndFrame = 16,
+        Length = 5,
+    }
+}
+]]
 
 local function giveSegmentsDefaultProps(segmentTable)
     for i, segment in pairs(segmentTable) do
@@ -13,7 +33,7 @@ local function giveSegmentsDefaultProps(segmentTable)
         assertType(segment.EndFrame, "number", true)
         assertType(segment.Length, "number")
 
-        segment.Name = segment.Name or ("Segment" .. i)
+        segment.Name = segment.Name or "Segment"
         segment.EndFrame = segment.EndFrame or segment.StartFrame
     end
 
@@ -35,7 +55,12 @@ function Spranimation.new(segmentTable, priority, looped)
     end
     self.Length = totalLength
 
-    return setmetatable( {}, {__index = self} )
+    return setmetatable({}, {
+        __index = self,
+        __newindex = function()
+            error("Spranimation is read only")
+        end,
+    })
 end
 
 
