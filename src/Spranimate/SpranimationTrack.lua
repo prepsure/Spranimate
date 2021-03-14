@@ -8,10 +8,12 @@ function SpranimationTrack.new(Spranimation)
     local self = setmetatable({}, SpranimationTrack)
 
     self.Spranimation = Spranimation
-    self.IsPlaying = false
-    self.Length = Spranimation.Length
+
     self.Looped = Spranimation.Looped
     self.Priority = Spranimation.Priority
+
+    self.Length = Spranimation.Length
+    self.IsPlaying = false
     self.Speed = 1
     self.TimePosition = 0
 
@@ -25,7 +27,7 @@ function SpranimationTrack:AdjustSpeed(speed)
 end
 
 
-function SpranimationTrack:GetMarkerReachedSignal(name)
+function SpranimationTrack:GetSegmentReachedSignal(segmentName)
 
 end
 
