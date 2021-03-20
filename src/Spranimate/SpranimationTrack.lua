@@ -2,6 +2,8 @@ local SpranimationTrack = {}
 
 SpranimationTrack.__index = SpranimationTrack
 
+local writableProps = {"Looped", "Priority", "TimePosition"}
+
 
 function SpranimationTrack.new(Spranimation)
 
@@ -17,8 +19,16 @@ function SpranimationTrack.new(Spranimation)
     self.Speed = 1
     self.TimePosition = 0
 
-    return self
+    return setmetatable({}, {
+        __index = self,
+        __newindex = function(index, value)
+            if not table.find(writableProps, index) then
+                error("cannot write to " .. index .. " in SpranimationTrack")
+            end
 
+            self[index] = value
+        end
+    })
 end
 
 
