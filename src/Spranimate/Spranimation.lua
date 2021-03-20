@@ -46,8 +46,8 @@ function Spranimation.new(segmentTable, priority, looped)
 
     self._segmentTable = giveSegmentsDefaultProps(segmentTable)
 
-    self.Priority = priority
-    self.Looped = looped
+    self.Priority = priority or Enum.AnimationPriority.Core
+    self.Looped = not not looped
 
     local totalLength = 0
     for _, segment in pairs(segmentTable) do
