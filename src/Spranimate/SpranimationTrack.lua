@@ -60,11 +60,6 @@ function SpranimationTrack:_playSpranimation()
 end
 
 
-function SpranimationTrack:AdjustSpeed(speed)
-
-end
-
-
 function SpranimationTrack:GetSegmentReachedSignal(segmentName)
 
 end
@@ -76,12 +71,13 @@ end
 
 
 function SpranimationTrack:Play(speed)
+    self.IsPlaying = true
     self._playThread()
 end
 
 
 function SpranimationTrack:Stop()
-
+    self.IsPlaying = false
 end
 
 
