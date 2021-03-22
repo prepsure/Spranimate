@@ -1,3 +1,6 @@
+local FastWait = require(script.Parent.FastWait)
+
+
 local SpranimationTrack = {}
 
 SpranimationTrack.__index = SpranimationTrack
@@ -5,11 +8,12 @@ SpranimationTrack.__index = SpranimationTrack
 local writableProps = {"Looped", "Priority", "TimePosition"}
 
 
-function SpranimationTrack.new(Spranimation)
+function SpranimationTrack.new(Spranimation, Spranimator)
 
     local self = setmetatable({}, SpranimationTrack)
 
     self.Spranimation = Spranimation
+    self._spranimator = Spranimator
 
     self.Looped = Spranimation.Looped
     self.Priority = Spranimation.Priority
@@ -19,7 +23,7 @@ function SpranimationTrack.new(Spranimation)
     self.Speed = 1
     self.TimePosition = 0
 
-    return setmetatable({}, {
+    return self--[[setmetatable({}, {
         __index = self,
         __newindex = function(index, value)
             if not table.find(writableProps, index) then
@@ -28,7 +32,7 @@ function SpranimationTrack.new(Spranimation)
 
             self[index] = value
         end
-    })
+    })]]
 end
 
 
@@ -49,6 +53,24 @@ end
 
 function SpranimationTrack:Play(speed)
 
+    self._playing = coroutine.wrap(function()
+
+        while true do
+            local spranimation = self.Spranimation
+
+            for i, segment in pairs(spranimation._segmentTable) do
+                local framesInSegment = segment.EndFrame - segment.StartFrame + 1
+
+                for frame = segment.StartFrame, segment.EndFrame do
+                    self._spranimator:SetFrame(frame)
+                    FastWait(segment.Length/framesInSegment)
+                end
+            end
+        end
+
+    end)
+
+    self._playing()
 end
 
 
