@@ -21,7 +21,9 @@ function SpranimationTrack.new(Spranimation, Spranimator)
     self.Length = Spranimation.Length
     self.IsPlaying = false
     self.Speed = 1
-    self.TimePosition = 0
+
+    self.CurrentFrame = Spranimation._segmentTable[1].StartFrame
+    self.CurrentSegment = 1
 
     self._playThread = coroutine.wrap(function()
         while true do
@@ -42,21 +44,33 @@ function SpranimationTrack.new(Spranimation, Spranimator)
 end
 
 
-function SpranimationTrack:_playSpranimation()
+function SpranimationTrack:AdvanceFrame()
+    local segTable = self.Spranimation._segmentTable
 
-    for i, segment in pairs(self.Spranimation._segmentTable) do
-        local framesInSegment = segment.EndFrame - segment.StartFrame + 1
-
-        for frame = segment.StartFrame, segment.EndFrame do
-            self._spranimator:SetFrame(frame)
-            FastWait(segment.Length/framesInSegment)
-
-            if not self.IsPlaying then
-                coroutine.yield()
-            end
-        end
+    if self.CurrentFrame == segTable[self.CurrentSegment].EndFrame then
+        self.CurrentSegment = self.CurrentSegment % #segTable + 1
+        self.CurrentFrame = segTable[self.CurrentSegment].StartFrame
+    else
+        self.CurrentFrame += 1
     end
 
+    self._spranimator:SetFrame(self.CurrentFrame)
+end
+
+
+function SpranimationTrack:_playSpranimation()
+    while true do
+        local segTable = self.Spranimation._segmentTable
+        local segment = segTable[self.CurrentSegment]
+        local framesInSegment = segment.EndFrame - segment.StartFrame + 1
+
+        self:AdvanceFrame()
+        FastWait(segment.Length/framesInSegment)
+
+        if not self.IsPlaying then
+            coroutine.yield()
+        end
+    end
 end
 
 
