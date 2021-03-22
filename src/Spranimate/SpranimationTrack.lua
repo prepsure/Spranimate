@@ -23,12 +23,10 @@ function SpranimationTrack.new(Spranimation, Spranimator)
     self.Speed = 1
 
     self.CurrentFrame = Spranimation._segmentTable[1].StartFrame
-    self.CurrentSegment = 1
+    self.CurrentSegmentIndex = 1
 
     self._playThread = coroutine.wrap(function()
-        while true do
-            self:_playSpranimation()
-        end
+        self:_playSpranimation()
     end)
 
     return self--[[setmetatable({}, {
@@ -47,9 +45,9 @@ end
 function SpranimationTrack:AdvanceFrame()
     local segTable = self.Spranimation._segmentTable
 
-    if self.CurrentFrame == segTable[self.CurrentSegment].EndFrame then
-        self.CurrentSegment = self.CurrentSegment % #segTable + 1
-        self.CurrentFrame = segTable[self.CurrentSegment].StartFrame
+    if self.CurrentFrame == segTable[self.CurrentSegmentIndex].EndFrame then
+        self.CurrentSegmentIndex = self.CurrentSegmentIndex % #segTable + 1
+        self.CurrentFrame = segTable[self.CurrentSegmentIndex].StartFrame
     else
         self.CurrentFrame += 1
     end
@@ -61,7 +59,7 @@ end
 function SpranimationTrack:_playSpranimation()
     while true do
         local segTable = self.Spranimation._segmentTable
-        local segment = segTable[self.CurrentSegment]
+        local segment = segTable[self.CurrentSegmentIndex]
         local framesInSegment = segment.EndFrame - segment.StartFrame + 1
 
         self:AdvanceFrame()
