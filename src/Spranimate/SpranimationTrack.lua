@@ -25,9 +25,8 @@ function SpranimationTrack.new(Spranimation, Spranimator)
     self.CurrentFrame = Spranimation._segmentTable[1].StartFrame
     self.CurrentSegmentIndex = 1
 
-    self._playThread = coroutine.wrap(function()
-        self:_playSpranimation()
-    end)
+    self._destroyed = false
+    self._playThread = self:_loopWithTimings()
 
     return self--[[setmetatable({}, {
         __index = self,
@@ -44,10 +43,11 @@ end
 
 function SpranimationTrack:AdvanceFrame()
     local segTable = self.Spranimation._segmentTable
+    local segment = segTable[self.CurrentSegmentIndex]
 
-    if self.CurrentFrame == segTable[self.CurrentSegmentIndex].EndFrame then
-        self.CurrentSegmentIndex = self.CurrentSegmentIndex % #segTable + 1
-        self.CurrentFrame = segTable[self.CurrentSegmentIndex].StartFrame
+    if self.CurrentFrame == segment.EndFrame then
+        self.CurrentSegmentIndex = (self.CurrentSegmentIndex % #segTable) + 1
+        self.CurrentFrame = segment.StartFrame
     else
         self.CurrentFrame += 1
     end
@@ -56,19 +56,21 @@ function SpranimationTrack:AdvanceFrame()
 end
 
 
-function SpranimationTrack:_playSpranimation()
-    while true do
-        local segTable = self.Spranimation._segmentTable
-        local segment = segTable[self.CurrentSegmentIndex]
-        local framesInSegment = segment.EndFrame - segment.StartFrame + 1
+function SpranimationTrack:_loopWithTimings()
+    return coroutine.wrap(function()
+        while not self._destroyed do
+            self:AdvanceFrame()
 
-        self:AdvanceFrame()
-        FastWait(segment.Length/framesInSegment)
+            local segTable = self.Spranimation._segmentTable
+            local segment = segTable[self.CurrentSegmentIndex]
+            local framesInSegment = segment.EndFrame - segment.StartFrame + 1
+            FastWait(segment.Length/framesInSegment/self.Speed)
 
-        if not self.IsPlaying then
-            coroutine.yield()
+            if not self.IsPlaying then
+                coroutine.yield()
+            end
         end
-    end
+    end)
 end
 
 
