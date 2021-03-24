@@ -1,4 +1,5 @@
 local FastWait = require(script.Parent.FastWait)
+local Signal = require(script.Parent.Signal)
 
 
 local SpranimationTrack = {}
@@ -27,6 +28,7 @@ function SpranimationTrack.new(Spranimation, Spranimator)
 
     self._destroyed = false
     self._playThread = self:_loopWithTimings()
+    self._segmentSignalTable = {}
 
     return self--[[setmetatable({}, {
         __index = self,
@@ -48,6 +50,11 @@ function SpranimationTrack:AdvanceFrame()
     if self.CurrentFrame == segment.EndFrame then
         self.CurrentSegmentIndex = (self.CurrentSegmentIndex % #segTable) + 1
         self.CurrentFrame = segment.StartFrame
+
+        local segSignal = self._segmentSignalTable[segment.Name]
+        if segSignal then
+            segSignal:Fire(segment.Name)
+        end
     else
         self.CurrentFrame += 1
     end
@@ -75,7 +82,13 @@ end
 
 
 function SpranimationTrack:GetSegmentReachedSignal(segmentName)
+    if self._segmentSignalTable[segmentName] then
+        return self._segmentSignalTable[segmentName]
+    end
 
+    local newSignal = Signal.new()
+    self._segmentSignalTable[segmentName] = newSignal
+    return newSignal
 end
 
 
