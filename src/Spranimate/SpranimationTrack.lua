@@ -59,16 +59,16 @@ end
 function SpranimationTrack:_loopWithTimings()
     return coroutine.wrap(function()
         while not self._destroyed do
+            if not self.IsPlaying then
+                coroutine.yield()
+            end
+
             self:AdvanceFrame()
 
             local segTable = self.Spranimation._segmentTable
             local segment = segTable[self.CurrentSegmentIndex]
             local framesInSegment = segment.EndFrame - segment.StartFrame + 1
             FastWait(segment.Length/framesInSegment/self.Speed)
-
-            if not self.IsPlaying then
-                coroutine.yield()
-            end
         end
     end)
 end
@@ -86,7 +86,6 @@ end
 
 function SpranimationTrack:Play(speed)
     self.IsPlaying = true
-    self._playThread()
 end
 
 
