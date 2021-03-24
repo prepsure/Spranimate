@@ -80,7 +80,17 @@ end
 
 
 function SpranimationTrack:GetTimeOfSegment(segmentName)
+    local totalTime = 0
 
+    for index, segment in pairs(self.Spranimation._segmentTable) do
+        if segment.Name == segmentName then
+            return totalTime
+        end
+
+        totalTime += segment.Length
+    end
+
+    error("segment name not found in Spranimation")
 end
 
 
