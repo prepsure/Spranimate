@@ -20,6 +20,8 @@ function Spranimator.new(gui)
     self.Changed = Instance.new("BindableEvent")
     self.AnimationPlayed = Instance.new("BindableEvent")
 
+    self._tracks = {}
+
     return self
 
 end
@@ -43,7 +45,10 @@ end
 
 
 function Spranimator:LoadSpranimation(Spranimation)
-    return SpranimationTrack.new(Spranimation, self)
+    local track = SpranimationTrack.new(Spranimation, self)
+
+    table.insert(self._tracks, track)
+    return track
 end
 
 
