@@ -40,7 +40,15 @@ end
 
 
 function Spranimator:GetPlayingSpranimationTracks()
+    local playingTracks = {}
 
+    for _, t in pairs(self._tracks) do
+        if t.IsPlaying then
+            table.insert(playingTracks, t)
+        end
+    end
+
+    return playingTracks
 end
 
 
@@ -52,8 +60,10 @@ function Spranimator:LoadSpranimation(Spranimation)
 end
 
 
-function Spranimator:StepSpranimations(dt)
-
+function Spranimator:StepSpranimations(frames)
+    for _, t in pairs(self._tracks) do
+        t:AdvanceFrame(frames)
+    end
 end
 
 
