@@ -4,6 +4,7 @@ local assertType = require(script.Parent.TypeChecker).AssertType
 local Spranimation = {}
 
 Spranimation.__index = Spranimation
+Spranimation.writableProps = {"Looped", "Priority"}
 
 --[[
 local sampleSegmentTable = {
@@ -57,8 +58,12 @@ function Spranimation.new(segmentTable, priority, looped)
 
     return setmetatable({}, {
         __index = self,
-        __newindex = function()
-            error("Spranimation is read only")
+        __newindex = function(_, index, value)
+            if not table.find(self.writableProps, index) then
+                error("cannot write to " .. index .. " to Spranimation")
+            end
+
+            self[index] = value
         end,
     })
 end
