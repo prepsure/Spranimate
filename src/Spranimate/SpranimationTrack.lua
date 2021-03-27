@@ -44,7 +44,7 @@ end
 
 
 -- a function that sets the animation to the next frame in its sequence, respecting segments
-function SpranimationTrack:AdvanceFrame()
+function SpranimationTrack:AdvanceFrame(frames) -- TODO make work for multiple frames
     local segTable = self.Spranimation._segmentTable
     local segment = segTable[self.CurrentSegmentIndex]
 
@@ -69,12 +69,17 @@ end
 
 function SpranimationTrack:_makeSpranimationCoroutine()
     return coroutine.wrap(function()
-        -- coroutine will only complete upon the instance being destroyed
-        while not self._destroyed do
+        repeat
 
             if not self.IsPlaying then
                 -- pause when not playing
                 coroutine.yield()
+                -- refresh loop when resuming
+            end
+
+            -- coroutine will only complete upon the instance being destroyed
+            if self._destroyed then
+                break
             end
 
             -- set next frame
@@ -86,7 +91,8 @@ function SpranimationTrack:_makeSpranimationCoroutine()
             local framesInSegment = segment.EndFrame - segment.StartFrame + 1 -- inclusive countining :)
             FastWait(segment.Length/framesInSegment/self.Speed) -- TODO a negative speed should play the animation backwards
 
-        end
+        until false -- todo implement not looping
+
     end)
 end
 
@@ -119,6 +125,7 @@ end
 
 function SpranimationTrack:Play(speed)
     self.IsPlaying = true
+    self._playThread()
 end
 
 
