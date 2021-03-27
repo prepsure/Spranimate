@@ -6,26 +6,6 @@ local Spranimation = {}
 Spranimation.__index = Spranimation
 Spranimation.writableProps = {"Looped", "Priority"}
 
---[[
-local sampleSegmentTable = {
-    {
-        Name = "Seg1",
-        StartFrame = 1,
-        EndFrame = 3,
-        Length = 0.5,
-    },
-    {
-        Name = "Seg2",
-        StartFrame = 4,
-        Length = 1,
-    },
-    {
-        StartFrame = 6,
-        EndFrame = 16,
-        Length = 5,
-    }
-}
-]]
 
 local function giveSegmentsDefaultProps(segmentTable)
     for i, segment in pairs(segmentTable) do
