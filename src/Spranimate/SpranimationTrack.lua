@@ -98,10 +98,12 @@ end
 
 
 function SpranimationTrack:GetSegmentReachedSignal(segmentName)
+    -- check if a signal for that name already exists and return it if so
     if self._segmentSignalTable[segmentName] then
         return self._segmentSignalTable[segmentName]
     end
 
+    -- create new signal with the index of segmentName
     local newSignal = Signal.new()
     self._segmentSignalTable[segmentName] = newSignal
     return newSignal
