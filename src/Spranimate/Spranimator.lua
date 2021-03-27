@@ -1,3 +1,4 @@
+local RunService = game:GetService("RunService")
 local SpranimationTrack = require(script.Parent.SpranimationTrack)
 
 
@@ -27,15 +28,27 @@ function Spranimator.new(gui)
 end
 
 
-function Spranimator:SetFrame(frame)
+function Spranimator:SetFrame(frame, flipX, flipY)
     local zeroIndexed = frame - 1
 
     local spritesPerRow = self.ImageSize.X/self.SpriteSize.X
 
     local col = zeroIndexed % spritesPerRow
     local row = math.floor(zeroIndexed / spritesPerRow)
+    local flipSize = self.SpriteSize
+
+    if flipX then
+        flipSize = Vector2.new(-flipSize.X, flipSize.Y)
+        col += 1
+    end
+
+    if flipY then
+        flipSize = Vector2.new(flipSize.X, -flipSize.Y)
+        row += 1
+    end
 
     self.Adornee.ImageRectOffset = Vector2.new(col * self.SpriteSize.X, row * self.SpriteSize.Y)
+    self.Adornee.ImageRectSize = flipSize
 end
 
 
