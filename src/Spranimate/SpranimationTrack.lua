@@ -60,7 +60,8 @@ function SpranimationTrack:AdvanceFrame(frames) -- TODO make work for multiple f
             segSignal:Fire(segment.Name)
         end
     else
-        self.CurrentFrame += 1
+        -- math.sign accounts for frames going in reverse
+        self.CurrentFrame += math.sign(segment.EndFrame - segment.StartFrame)
     end
 
     self._spranimator:SetFrame(self.CurrentFrame)
@@ -88,7 +89,7 @@ function SpranimationTrack:_makeSpranimationCoroutine()
             -- wait for next frame (timing must be >=1/60 of a second)
             local segTable = self.Spranimation._segmentTable
             local segment = segTable[self.CurrentSegmentIndex]
-            local framesInSegment = segment.EndFrame - segment.StartFrame + 1 -- inclusive countining :)
+            local framesInSegment = math.abs(segment.EndFrame - segment.StartFrame) + 1 -- inclusive countining :)
             FastWait(segment.Length/framesInSegment/self.Speed) -- TODO a negative speed should play the animation backwards
 
         until false -- todo implement not looping
