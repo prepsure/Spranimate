@@ -122,8 +122,17 @@ function SpranimationTrack:Play(speed)
 end
 
 
-function SpranimationTrack:Stop()
+function SpranimationTrack:Pause()
     self.IsPlaying = false
+end
+
+
+function SpranimationTrack:Stop()
+    self:Pause()
+
+    self.CurrentSegmentIndex = 1
+    self.CurrentFrame = self.Spranimation._segmentTable[1].StartFrame
+    self._spranimator:SetFrame(self.CurrentFrame)
 end
 
 
