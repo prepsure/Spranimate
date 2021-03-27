@@ -4,8 +4,8 @@
     "$className": "DataModel",
 
     "ReplicatedStorage": {
-      "Common": {
-        "$path": "src"
+      "Spranimate": {
+        "$path": "src/Spranimate"
       }
     }
   }

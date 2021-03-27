@@ -4,7 +4,28 @@ local assertType = require(script.Parent.TypeChecker).AssertType
 local Spranimation = {}
 
 Spranimation.__index = Spranimation
+Spranimation.writableProps = {"Looped", "Priority"}
 
+--[[
+local sampleSegmentTable = {
+    {
+        Name = "Seg1",
+        StartFrame = 1,
+        EndFrame = 3,
+        Length = 0.5,
+    },
+    {
+        Name = "Seg2",
+        StartFrame = 4,
+        Length = 1,
+    },
+    {
+        StartFrame = 6,
+        EndFrame = 16,
+        Length = 5,
+    }
+}
+]]
 
 local function giveSegmentsDefaultProps(segmentTable)
     for i, segment in pairs(segmentTable) do
@@ -13,7 +34,7 @@ local function giveSegmentsDefaultProps(segmentTable)
         assertType(segment.EndFrame, "number", true)
         assertType(segment.Length, "number")
 
-        segment.Name = segment.Name or ("Segment" .. i)
+        segment.Name = segment.Name or "Segment"
         segment.EndFrame = segment.EndFrame or segment.StartFrame
     end
 
@@ -26,8 +47,8 @@ function Spranimation.new(segmentTable, priority, looped)
 
     self._segmentTable = giveSegmentsDefaultProps(segmentTable)
 
-    self.Priority = priority
-    self.Looped = looped
+    self.Priority = priority or Enum.AnimationPriority.Core
+    self.Looped = not not looped
 
     local totalLength = 0
     for _, segment in pairs(segmentTable) do
@@ -35,7 +56,16 @@ function Spranimation.new(segmentTable, priority, looped)
     end
     self.Length = totalLength
 
-    return setmetatable( {}, {__index = self} )
+    return setmetatable({}, {
+        __index = self,
+        __newindex = function(_, index, value)
+            if not table.find(self.writableProps, index) then
+                error("cannot write to " .. index .. " to Spranimation")
+            end
+
+            self[index] = value
+        end,
+    })
 end
 
 
