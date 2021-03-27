@@ -43,16 +43,28 @@ function SpranimationTrack.new(Spranimation, Spranimator)
 end
 
 
+function SpranimationTrack:_askSpranimatorToSetFrame()
+    if self._spranimator:_isHighestPriorityPlayingTrack(self) then
+        self._spranimator:SetFrame(self.CurrentFrame, self.FlipX, self.FlipY)
+    end
+end
+
+
+function SpranimationTrack:_getCurrentSegment()
+    return self.Spranimation._segmentTable[self.CurrentSegmentIndex]
+end
+
+
 -- a function that sets the animation to the next frame in its sequence, respecting segments
 function SpranimationTrack:AdvanceFrame(frames) -- TODO make work for multiple frames
-    local segTable = self.Spranimation._segmentTable
-    local segment = segTable[self.CurrentSegmentIndex]
+    local segment = self:_getCurrentSegment()
 
     -- if we're at the end of the segment, we have to jump to the next one
     if self.CurrentFrame == segment.EndFrame then
         -- get to the next segment using mods to loop back to the first if needed
-        self.CurrentSegmentIndex = (self.CurrentSegmentIndex % #segTable) + 1
-        self.CurrentFrame = segment.StartFrame
+        local newSegmentIndex = (self.CurrentSegmentIndex % #self.Spranimation._segmentTable) + 1
+        self.CurrentSegmentIndex = newSegmentIndex
+        self.CurrentFrame = self:_getCurrentSegment().StartFrame
 
         -- if the user has a signal attatched to the loading of the new segment, it should fire
         local segSignal = self._segmentSignalTable[segment.Name]
@@ -64,7 +76,7 @@ function SpranimationTrack:AdvanceFrame(frames) -- TODO make work for multiple f
         self.CurrentFrame += math.sign(segment.EndFrame - segment.StartFrame)
     end
 
-    self._spranimator:SetFrame(self.CurrentFrame)
+    self:_askSpranimatorToSetFrame()
 end
 
 
@@ -87,8 +99,7 @@ function SpranimationTrack:_makeSpranimationCoroutine()
             self:AdvanceFrame()
 
             -- wait for next frame (timing must be >=1/60 of a second)
-            local segTable = self.Spranimation._segmentTable
-            local segment = segTable[self.CurrentSegmentIndex]
+            local segment = self:_getCurrentSegment()
             local framesInSegment = math.abs(segment.EndFrame - segment.StartFrame) + 1 -- inclusive countining :)
             FastWait(segment.Length/framesInSegment/self.Speed) -- TODO a negative speed should play the animation backwards
 

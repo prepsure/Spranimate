@@ -28,6 +28,21 @@ function Spranimator.new(gui)
 end
 
 
+function Spranimator:_isHighestPriorityPlayingTrack(track)
+    for i, t in pairs(self._tracks) do
+        if not t.IsPlaying then
+            continue
+        end
+
+        if t.Priority.Value >= track.Priority.Value then
+            return t == track
+        end
+    end
+
+    return true
+end
+
+
 function Spranimator:SetFrame(frame, flipX, flipY)
     local zeroIndexed = frame - 1
 
