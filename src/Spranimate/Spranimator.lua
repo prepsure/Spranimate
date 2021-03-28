@@ -5,6 +5,7 @@ local SpranimationTrack = require(script.Parent.SpranimationTrack)
 local Spranimator = {}
 
 Spranimator.__index = Spranimator
+Spranimator.ClassName = "Spranimator"
 
 
 function Spranimator.new(gui)
@@ -12,7 +13,6 @@ function Spranimator.new(gui)
     local self = setmetatable({}, Spranimator)
 
     self.Adornee = gui
-    self.ClassName = "Spranimator"
     self.Name = "Spranimator"
 
     self.SpriteSize = gui:GetAttribute("SpriteSize")

@@ -4,6 +4,8 @@ local assertType = require(script.Parent.TypeChecker).AssertType
 local Spranimation = {}
 
 Spranimation.__index = Spranimation
+Spranimation.ClassName = "Spranimation"
+
 Spranimation.writableProps = {"Looped", "Priority"}
 
 

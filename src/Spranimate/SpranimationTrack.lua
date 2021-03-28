@@ -5,6 +5,7 @@ local Signal = require(script.Parent.Signal)
 local SpranimationTrack = {}
 
 SpranimationTrack.__index = SpranimationTrack
+SpranimationTrack.ClassName = "SpranimationTrack"
 
 local writableProps = {"Looped", "Priority", "TimePosition"}
 
