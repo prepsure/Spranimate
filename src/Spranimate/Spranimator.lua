@@ -23,23 +23,29 @@ function Spranimator.new(gui)
 
     self._tracks = {}
 
+    self._setFrameCxn = RunService.Heartbeat:Connect(function()
+        self:_setHighestPriorityPlayingFrame()
+    end)
+
     return self
 
 end
 
 
-function Spranimator:_isHighestPriorityPlayingTrack(track)
-    for i, t in pairs(self._tracks) do
-        if not t.IsPlaying then
-            continue
-        end
+function Spranimator:_setHighestPriorityPlayingFrame()
+    if #self._tracks == 0 then
+        return
+    end
 
-        if t.Priority.Value >= track.Priority.Value then
-            return t == track
+    local highest = self._tracks[1]
+
+    for i, track in pairs(self._tracks) do
+        if track.IsPlaying and (track.Priority.Value > highest.Priority.Value) then
+            highest = track
         end
     end
 
-    return true
+    self:SetFrame(highest.CurrentFrame, highest.FlipX, highest.FlipY)
 end
 
 
