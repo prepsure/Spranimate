@@ -146,4 +146,14 @@ function SpranimationTrack:Stop()
 end
 
 
+function SpranimationTrack:Clone()
+    return SpranimationTrack.new(self.Spranimation)
+end
+
+
+function SpranimationTrack:Destroy()
+    self._destroyed = true
+end
+
+
 return SpranimationTrack
