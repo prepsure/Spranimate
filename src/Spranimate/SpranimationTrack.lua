@@ -157,6 +157,10 @@ end
 
 function SpranimationTrack:Destroy()
     self._destroyed = true
+
+    for _, signal in pairs(self._segmentSignalTable) do
+        signal:Destroy()
+    end
 end
 
 
