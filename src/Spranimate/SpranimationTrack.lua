@@ -26,6 +26,9 @@ function SpranimationTrack.new(Spranimation)
     self.CurrentFrame = Spranimation._segmentTable[1].StartFrame
     self.CurrentSegmentIndex = 1
 
+    self.FlipX = false
+    self.FlipY = false
+
     self._destroyed = false
     self._playThread = self:_makeSpranimationCoroutine()
     self._segmentSignalTable = {}
