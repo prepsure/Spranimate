@@ -9,12 +9,11 @@ SpranimationTrack.__index = SpranimationTrack
 local writableProps = {"Looped", "Priority", "TimePosition"}
 
 
-function SpranimationTrack.new(Spranimation, Spranimator)
+function SpranimationTrack.new(Spranimation)
 
     local self = setmetatable({}, SpranimationTrack)
 
     self.Spranimation = Spranimation
-    self._spranimator = Spranimator -- just used for setting the frame, so can be private
 
     self.Looped = Spranimation.Looped
     self.Priority = Spranimation.Priority
@@ -43,13 +42,6 @@ function SpranimationTrack.new(Spranimation, Spranimator)
 end
 
 
-function SpranimationTrack:_askSpranimatorToSetFrame()
-    if self._spranimator:_isHighestPriorityPlayingTrack(self) then
-        self._spranimator:SetFrame(self.CurrentFrame, self.FlipX, self.FlipY)
-    end
-end
-
-
 function SpranimationTrack:_getCurrentSegment()
     return self.Spranimation._segmentTable[self.CurrentSegmentIndex]
 end
@@ -75,8 +67,6 @@ function SpranimationTrack:AdvanceFrame(frames) -- TODO make work for multiple f
         -- math.sign accounts for frames going in reverse
         self.CurrentFrame += math.sign(segment.EndFrame - segment.StartFrame)
     end
-
-    self:_askSpranimatorToSetFrame()
 end
 
 
@@ -103,7 +93,7 @@ function SpranimationTrack:_makeSpranimationCoroutine()
             local framesInSegment = math.abs(segment.EndFrame - segment.StartFrame) + 1 -- inclusive countining :)
             FastWait(segment.Length/framesInSegment/self.Speed) -- TODO a negative speed should play the animation backwards
 
-        until false -- todo implement not looping
+        until self._destroyed -- todo implement not looping
 
     end)
 end
@@ -153,7 +143,6 @@ function SpranimationTrack:Stop()
 
     self.CurrentSegmentIndex = 1
     self.CurrentFrame = self.Spranimation._segmentTable[1].StartFrame
-    self._spranimator:SetFrame(self.CurrentFrame)
 end
 
 
