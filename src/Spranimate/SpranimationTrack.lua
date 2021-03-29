@@ -7,11 +7,12 @@ local SpranimationTrack = {}
 SpranimationTrack.__index = SpranimationTrack
 SpranimationTrack.ClassName = "SpranimationTrack"
 
-local writableProps = {"Looped", "Priority", "TimePosition"}
-
 
 ---------- constructor ----------
 
+
+--- constructs a new SpranimationTrack
+-- @param Spranimation <Spranimation> - the Spranimation the SpranimationTrack should draw data from
 
 function SpranimationTrack.new(Spranimation)
 
@@ -23,7 +24,7 @@ function SpranimationTrack.new(Spranimation)
     self.Priority = Spranimation.Priority
 
     self.Length = Spranimation.Length
-    self.IsPlaying = false
+    self._isPlaying = false
     self.Speed = 1
 
     self.CurrentFrame = Spranimation._segmentTable[1].StartFrame
@@ -36,16 +37,7 @@ function SpranimationTrack.new(Spranimation)
     self._playThread = self:_makeSpranimationCoroutine()
     self._segmentSignalTable = {}
 
-    return self--[[setmetatable({}, {
-        __index = self,
-        __newindex = function(index, value)
-            if not table.find(writableProps, index) then
-                error("cannot write to " .. index .. " in SpranimationTrack")
-            end
-
-            self[index] = value
-        end
-    })]]
+    return self
 end
 
 
@@ -61,7 +53,7 @@ function SpranimationTrack:_makeSpranimationCoroutine()
     return coroutine.wrap(function()
         repeat
 
-            if not self.IsPlaying then
+            if not self._isPlaying then
                 -- pause when not playing
                 coroutine.yield()
                 -- refresh loop when resuming
@@ -89,7 +81,9 @@ end
 ---------- public functions ----------
 
 
--- a function that sets the animation to the next frame in its sequence, respecting segments
+--- sets the animation to the next frame in its sequence, respecting segments
+-- @param frames <integer> - the number of frames to advance forward
+
 function SpranimationTrack:AdvanceFrame(frames) -- TODO make work for multiple frames
     local segment = self:_getCurrentSegment()
 
@@ -112,6 +106,11 @@ function SpranimationTrack:AdvanceFrame(frames) -- TODO make work for multiple f
 end
 
 
+--- gets a signal for a specific segment name
+-- @param   segmentName   <string>  - the name of the segment that the signal should fire for
+-- @return  segmentSignal <Signal>  - a signal that will fire when the segment switches to the named segment
+--                                  - will fire for multiple segments with the same name
+
 function SpranimationTrack:GetSegmentReachedSignal(segmentName)
     -- check if a signal for that name already exists and return it if so
     if self._segmentSignalTable[segmentName] then
@@ -124,6 +123,11 @@ function SpranimationTrack:GetSegmentReachedSignal(segmentName)
     return newSignal
 end
 
+
+--- gets the time the first segment with a name starts at
+-- @param  segmentName <string> - the name of the segment to get the time for
+-- @return time        <number> - the time position that the segment starts at
+--                              - (may not be accurate if each frame has a time not divisible by 60)
 
 function SpranimationTrack:GetTimeOfSegment(segmentName)
     local totalTime = 0
@@ -140,16 +144,30 @@ function SpranimationTrack:GetTimeOfSegment(segmentName)
 end
 
 
-function SpranimationTrack:Play(speed)
-    self.IsPlaying = true
+--- gets the playing state of the SpranimationTrack
+-- @return - true if the SpranimationTrack is currently playing
+
+function SpranimationTrack:IsPlaying()
+    return self._isPlaying
+end
+
+
+--- plays the spranimation track, starting from the current segment and frame
+
+function SpranimationTrack:Play()
+    self._isPlaying = true
     self._playThread()
 end
 
 
+--- stops the spranimation track, keeping the current segment and frame
+
 function SpranimationTrack:Pause()
-    self.IsPlaying = false
+    self._isPlaying = false
 end
 
+
+--- stops the spranimation track, resetting the current segment and frame
 
 function SpranimationTrack:Stop()
     self:Pause()
@@ -162,10 +180,15 @@ end
 ----------- roblox instance functions ----------
 
 
+--- copies the SpranimationTrack, but not the underlying Spranimation
+-- @return clone <SpranimationTrack> - the copied SpranimationTrack
+
 function SpranimationTrack:Clone()
     return SpranimationTrack.new(self.Spranimation)
 end
 
+
+--- destroys the SpranimationTrack, rendering it unusable
 
 function SpranimationTrack:Destroy()
     self._destroyed = true
