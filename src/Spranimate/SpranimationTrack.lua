@@ -10,6 +10,9 @@ SpranimationTrack.ClassName = "SpranimationTrack"
 local writableProps = {"Looped", "Priority", "TimePosition"}
 
 
+---------- constructor ----------
+
+
 function SpranimationTrack.new(Spranimation)
 
     local self = setmetatable({}, SpranimationTrack)
@@ -46,31 +49,11 @@ function SpranimationTrack.new(Spranimation)
 end
 
 
+---------- private functions ----------
+
+
 function SpranimationTrack:_getCurrentSegment()
     return self.Spranimation._segmentTable[self.CurrentSegmentIndex]
-end
-
-
--- a function that sets the animation to the next frame in its sequence, respecting segments
-function SpranimationTrack:AdvanceFrame(frames) -- TODO make work for multiple frames
-    local segment = self:_getCurrentSegment()
-
-    -- if we're at the end of the segment, we have to jump to the next one
-    if self.CurrentFrame == segment.EndFrame then
-        -- get to the next segment using mods to loop back to the first if needed
-        local newSegmentIndex = (self.CurrentSegmentIndex % #self.Spranimation._segmentTable) + 1
-        self.CurrentSegmentIndex = newSegmentIndex
-        self.CurrentFrame = self:_getCurrentSegment().StartFrame
-
-        -- if the user has a signal attatched to the loading of the new segment, it should fire
-        local segSignal = self._segmentSignalTable[segment.Name]
-        if segSignal then
-            segSignal:Fire(segment.Name)
-        end
-    else
-        -- math.sign accounts for frames going in reverse
-        self.CurrentFrame += math.sign(segment.EndFrame - segment.StartFrame)
-    end
 end
 
 
@@ -100,6 +83,32 @@ function SpranimationTrack:_makeSpranimationCoroutine()
         until self._destroyed -- todo implement not looping
 
     end)
+end
+
+
+---------- public functions ----------
+
+
+-- a function that sets the animation to the next frame in its sequence, respecting segments
+function SpranimationTrack:AdvanceFrame(frames) -- TODO make work for multiple frames
+    local segment = self:_getCurrentSegment()
+
+    -- if we're at the end of the segment, we have to jump to the next one
+    if self.CurrentFrame == segment.EndFrame then
+        -- get to the next segment using mods to loop back to the first if needed
+        local newSegmentIndex = (self.CurrentSegmentIndex % #self.Spranimation._segmentTable) + 1
+        self.CurrentSegmentIndex = newSegmentIndex
+        self.CurrentFrame = self:_getCurrentSegment().StartFrame
+
+        -- if the user has a signal attatched to the loading of the new segment, it should fire
+        local segSignal = self._segmentSignalTable[segment.Name]
+        if segSignal then
+            segSignal:Fire(segment.Name)
+        end
+    else
+        -- math.sign accounts for frames going in reverse
+        self.CurrentFrame += math.sign(segment.EndFrame - segment.StartFrame)
+    end
 end
 
 
@@ -148,6 +157,9 @@ function SpranimationTrack:Stop()
     self.CurrentSegmentIndex = 1
     self.CurrentFrame = self.Spranimation._segmentTable[1].StartFrame
 end
+
+
+----------- roblox instance functions ----------
 
 
 function SpranimationTrack:Clone()
