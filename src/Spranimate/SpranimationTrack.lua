@@ -28,7 +28,7 @@ function SpranimationTrack.new(Spranimation)
     self.Speed = 1
 
     self.CurrentFrame = Spranimation._segmentTable[1].StartFrame
-    self.CurrentSegmentIndex = 1
+    self._currentSegmentIndex = 1
 
     self.FlipX = false
     self.FlipY = false
@@ -45,7 +45,7 @@ end
 
 
 function SpranimationTrack:_getCurrentSegment()
-    return self.Spranimation._segmentTable[self.CurrentSegmentIndex]
+    return self.Spranimation._segmentTable[self._currentSegmentIndex]
 end
 
 
@@ -84,24 +84,33 @@ end
 --- sets the animation to the next frame in its sequence, respecting segments
 -- @param frames <integer> - the number of frames to advance forward
 
-function SpranimationTrack:AdvanceFrame(frames) -- TODO make work for multiple frames
+function SpranimationTrack:AdvanceFrame(frames)
     local segment = self:_getCurrentSegment()
 
-    -- if we're at the end of the segment, we have to jump to the next one
-    if self.CurrentFrame == segment.EndFrame then
-        -- get to the next segment using mods to loop back to the first if needed
-        local newSegmentIndex = (self.CurrentSegmentIndex % #self.Spranimation._segmentTable) + 1
-        self.CurrentSegmentIndex = newSegmentIndex
-        self.CurrentFrame = self:_getCurrentSegment().StartFrame
+    -- loop for each frame that needs to be counted
+    frames = frames or 1
+    for _ = 1, frames do
 
-        -- if the user has a signal attatched to the loading of the new segment, it should fire
-        local segSignal = self._segmentSignalTable[segment.Name]
-        if segSignal then
-            segSignal:Fire(segment.Name)
+        -- if we're at the end of the segment, we have to jump to the next one
+        if self.CurrentFrame == segment.EndFrame then
+            -- get to the next segment using mods to loop back to the first if needed
+            segment = (self._currentSegmentIndex % #self.Spranimation._segmentTable) + 1
+            self._currentSegmentIndex = segment
+            self.CurrentFrame = self:_getCurrentSegment().StartFrame
+
+            -- if the user has a signal attatched to the loading of the new segment, it should fire
+            local segSignal = self._segmentSignalTable[segment.Name]
+            if segSignal then
+                segSignal:Fire(segment.Name)
+            end
+
+            -- go to the next frame
+            continue
         end
-    else
+
         -- math.sign accounts for frames going in reverse
         self.CurrentFrame += math.sign(segment.EndFrame - segment.StartFrame)
+
     end
 end
 
@@ -172,7 +181,7 @@ end
 function SpranimationTrack:Stop()
     self:Pause()
 
-    self.CurrentSegmentIndex = 1
+    self._currentSegmentIndex = 1
     self.CurrentFrame = self.Spranimation._segmentTable[1].StartFrame
 end
 
