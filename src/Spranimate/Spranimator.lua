@@ -1,4 +1,9 @@
 local RunService = game:GetService("RunService")
+
+local modules = script.Parent.Modules
+local Janitor = require(modules.Janitor)
+local Signal = require(modules.Signal)
+
 local SpranimationTrack = require(script.Parent.SpranimationTrack)
 
 
@@ -12,20 +17,24 @@ function Spranimator.new(gui)
 
     local self = setmetatable({}, Spranimator)
 
+    self._janitor = Janitor.new()
+
+    -- public
     self.Adornee = gui
     self.Name = "Spranimator"
 
     self.SpriteSize = gui:GetAttribute("SpriteSize")
     self.ImageSize = gui:GetAttribute("ImageSize")
+    self.SpranimationPlayed = self._janitor:Add( Signal.new() )
 
-    self.Changed = Instance.new("BindableEvent")
-    self.AnimationPlayed = Instance.new("BindableEvent")
-
+    -- private
     self._tracks = {}
 
-    self._setFrameCxn = RunService.Heartbeat:Connect(function()
-        self:_setHighestPriorityPlayingFrame()
-    end)
+    self._setFrameCxn = self._janitor:Add(
+        RunService.Heartbeat:Connect(function()
+            self:_setHighestPriorityPlayingFrame()
+        end)
+    )
 
     return self
 
@@ -87,7 +96,8 @@ end
 
 
 function Spranimator:LoadSpranimation(Spranimation)
-    local track = SpranimationTrack.new(Spranimation, self)
+    local track = SpranimationTrack.new(Spranimation)
+    self._janitor:Add(track)
 
     table.insert(self._tracks, track)
     return track
@@ -98,6 +108,18 @@ function Spranimator:StepSpranimations(frames)
     for _, t in pairs(self._tracks) do
         t:AdvanceFrame(frames)
     end
+end
+
+
+function Spranimator:Clone()
+    return Spranimator.new(self.Adornee)
+end
+
+
+function Spranimator:Destroy()
+    self._janitor:Destroy()
+    table.clear(self)
+    setmetatable(self, nil)
 end
 
 

@@ -24,6 +24,19 @@ local function giveSegmentsDefaultProps(segmentTable)
 end
 
 
+local function getLengthAndFrameCount(segmentTable)
+    local totalLength = 0
+    local totalFrames = 0
+
+    for _, segment in pairs(segmentTable) do
+        totalLength += segment.Length
+        totalFrames += math.abs(segment.EndFrame - segment.StartFrame) + 1
+    end
+
+    return totalLength, totalFrames
+end
+
+
 function Spranimation.new(segmentTable, priority, looped)
     local self = setmetatable({}, Spranimation)
 
@@ -32,14 +45,7 @@ function Spranimation.new(segmentTable, priority, looped)
     self.Priority = priority or Enum.AnimationPriority.Core
     self.Looped = not not looped
 
-    local totalLength = 0
-    local totalFrames = 0
-    for _, segment in pairs(segmentTable) do
-        totalLength += segment.Length
-        totalFrames += math.abs(segment.EndFrame - segment.StartFrame) + 1
-    end
-    self.Length = totalLength
-    self.FrameCount = totalFrames
+    self.Length, self.FrameCount = getLengthAndFrameCount()
 
     return setmetatable({}, {
         __index = self,

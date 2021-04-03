@@ -1,5 +1,7 @@
-local FastWait = require(script.Parent.FastWait)
-local Signal = require(script.Parent.Signal)
+local modules = script.Parent.Modules
+local FastWait = require(modules.FastWait)
+local Janitor = require(modules.Janitor)
+local Signal = require(modules.Signal)
 
 
 local SpranimationTrack = {}
@@ -18,21 +20,24 @@ function SpranimationTrack.new(Spranimation)
 
     local self = setmetatable({}, SpranimationTrack)
 
+    self._janitor = Janitor.new()
+
+    -- public
     self.Spranimation = Spranimation
 
     self.Looped = Spranimation.Looped
     self.Priority = Spranimation.Priority
 
     self.Length = Spranimation.Length
-    self._isPlaying = false
+    self.IsPlaying = false
     self.Speed = 1
 
     self.CurrentFrame = Spranimation._segmentTable[1].StartFrame
-    self._currentSegmentIndex = 1
-
     self.FlipX = false
     self.FlipY = false
 
+    -- private
+    self._currentSegmentIndex = 1
     self._destroyed = false
     self._playThread = self:_makeSpranimationCoroutine()
     self._segmentSignalTable = {}
@@ -127,7 +132,7 @@ function SpranimationTrack:GetSegmentReachedSignal(segmentName)
     end
 
     -- create new signal with the index of segmentName
-    local newSignal = Signal.new()
+    local newSignal = self._janitor:Add( Signal.new() )
     self._segmentSignalTable[segmentName] = newSignal
     return newSignal
 end
@@ -150,14 +155,6 @@ function SpranimationTrack:GetTimeOfSegment(segmentName)
     end
 
     error("segment name not found in Spranimation")
-end
-
-
---- gets the playing state of the SpranimationTrack
--- @return - true if the SpranimationTrack is currently playing
-
-function SpranimationTrack:IsPlaying()
-    return self._isPlaying
 end
 
 
@@ -201,10 +198,9 @@ end
 
 function SpranimationTrack:Destroy()
     self._destroyed = true
-
-    for _, signal in pairs(self._segmentSignalTable) do
-        signal:Destroy()
-    end
+    self._janitor:Destroy()
+    table.clear(self)
+    setmetatable(self, nil)
 end
 
 
