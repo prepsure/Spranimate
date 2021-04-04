@@ -22,6 +22,7 @@ function SpranimationTrack.new(Spranimation)
     self._janitor = Janitor.new()
 
     -- public
+    self.Name = self.ClassName
     self.Spranimation = Spranimation
 
     self.Looped = Spranimation.Looped

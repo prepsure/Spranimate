@@ -26,7 +26,7 @@ function Spranimator.new(gui)
 
     -- public
     self.Adornee = gui
-    self.Name = "Spranimator"
+    self.Name = self.ClassName
 
     self.SpriteSize = gui:GetAttribute("SpriteSize")
     self.ImageSize = gui:GetAttribute("ImageSize")

@@ -40,6 +40,8 @@ function Spranimation.new(segmentTable, priority, looped)
 
     self._segmentTable = giveSegmentsDefaultProps(segmentTable)
 
+    self.Name = self.ClassName
+
     self.Priority = priority or Enum.AnimationPriority.Core
     self.Looped = not not looped
 
@@ -73,6 +75,17 @@ function Spranimation:GetFrameAtTime(timePos)
 
     warn("no frame found for time: " .. timePos .. " returning last frame")
     return self.LastFrame
+end
+
+
+function Spranimation:Clone()
+    return Spranimation.new(self._segmentTable, self.Priority, self.Looped)
+end
+
+
+function Spranimation:Destroy()
+    table.clear(self)
+    setmetatable(self, nil)
 end
 
 
