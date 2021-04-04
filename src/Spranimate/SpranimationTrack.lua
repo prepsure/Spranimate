@@ -178,7 +178,7 @@ end
 
 function SpranimationTrack:Seek(timePos)
     self.TimePosition = timePos
-    self.CurrentFrame = self.Spranimation:GetFrameAtTime()
+    self.CurrentFrame = self.Spranimation:GetFrameAtTime(timePos)
     return self.CurrentFrame
 end
 

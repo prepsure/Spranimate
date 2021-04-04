@@ -1,4 +1,5 @@
-local assertType = require(script.Parent.TypeChecker).AssertType
+local modules = script.Parent.Modules
+local assertType = require(modules.TypeChecker).AssertType
 
 
 local Spranimation = {}
@@ -45,14 +46,14 @@ function Spranimation.new(segmentTable, priority, looped)
     self.Priority = priority or Enum.AnimationPriority.Core
     self.Looped = not not looped
 
-    self.Length, self.FrameCount = getLengthAndFrameCount()
+    self.Length, self.FrameCount = getLengthAndFrameCount(self._segmentTable)
     self.FirstFrame = self._segmentTable[1].StartFrame
     self.LastFrame = self._segmentTable[#self._segmentTable].EndFrame
 
     return setmetatable({}, {
         __index = self,
         __newindex = function()
-            error("Spranimation is readonly, modify SpranimationTrack instead")
+            error("Spranimation is readonly, modify SpranimationTrack instead", 2)
         end,
     })
 end
@@ -66,8 +67,9 @@ function Spranimation:GetFrameAtTime(timePos)
         if totalTime + seg.Length > timePos then
             -- abs value for sequences that go backwards, +1 for inclusive counting
             local totalFrames = math.abs(seg.EndFrame - seg.StartFrame) + 1
+            local lowest = math.min(seg.StartFrame, seg.EndFrame)
             -- the equation [% of frames * length = time until target] rearranged and using floor to get a frame:
-            return math.floor( (timePos - totalTime) * totalFrames / seg.Length ) + seg.StartFrame
+            return math.floor( (timePos - totalTime) * totalFrames / seg.Length ) + lowest
         end
 
         totalTime += seg.Length

@@ -29,7 +29,7 @@ function Spranimator.new(gui)
     self.Name = self.ClassName
 
     self.SpriteSize = gui:GetAttribute("SpriteSize")
-    self.ImageSize = gui:GetAttribute("ImageSize")
+    self.SheetSize = gui:GetAttribute("SheetSize")
 
     self.SpranimationSwitched = self._janitor:Add( Signal.new() )
 
@@ -46,11 +46,12 @@ end
 
 
 function Spranimator:_runSpranimations()
-    local onTop = self._tracks[1]
+    local onTop = nil
 
     self._janitor:Add(
         RunService.Heartbeat:Connect(function(dt)
             local lastOnTop = onTop
+            onTop = nil
 
             for i, track in pairs(self._tracks) do
                 if not track.IsPlaying then
@@ -59,13 +60,17 @@ function Spranimator:_runSpranimations()
 
                 track:Seek((track.TimePosition + dt) % track.Length)
 
-                onTop = (track.Priority.Value > onTop.Priority.Value) and track or onTop
+                if (not onTop) or (track.Priority.Value > onTop.Priority.Value) then
+                    onTop = track
+                end
             end
 
-            self:SetFrame(onTop.CurrentFrame, onTop.FlipX, onTop.FlipY)
+            if onTop then
+                self:SetFrame(onTop.CurrentFrame, onTop.FlipX, onTop.FlipY)
+            end
 
             if onTop ~= lastOnTop then
-                self.SpranimationSwitched:Fire()
+                self.SpranimationSwitched:Fire(onTop)
             end
         end)
     )
@@ -84,7 +89,7 @@ end
 function Spranimator:SetFrame(frame, flipX, flipY)
     local zeroIndexed = frame - 1
 
-    local spritesPerRow = self.ImageSize.X/self.SpriteSize.X
+    local spritesPerRow = self.SheetSize.X/self.SpriteSize.X
 
     local col = zeroIndexed % spritesPerRow
     local row = math.floor(zeroIndexed / spritesPerRow)
