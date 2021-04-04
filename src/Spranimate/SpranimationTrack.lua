@@ -1,5 +1,4 @@
 local modules = script.Parent.Modules
-local FastWait = require(modules.FastWait)
 local Janitor = require(modules.Janitor)
 local Signal = require(modules.Signal)
 
