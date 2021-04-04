@@ -36,6 +36,10 @@ function SpranimationTrack.new(Spranimation)
     self.FlipX = false
     self.FlipY = false
 
+    self.DidLoop = self._janitor:Add( Signal.new() )
+    self.SegmentReached = self._janitor:Add( Signal.new() )
+    self.Stopped = self._janitor:Add( Signal.new() )
+
     -- private
     self._currentSegmentIndex = 1
     self._destroyed = false
@@ -62,6 +66,13 @@ end
 function SpranimationTrack:AdvanceFrame(frames)
     local segment = self:_getCurrentSegment()
 
+    -- if first frame, fire DidLoop
+    if self.CurrentFrame == self.Spranimation.FirstFrame and
+       self:_getCurrentSegment() == self.Spranimation._segmentTable[1]
+    then
+        self.DidLoop:Fire()
+    end
+
     -- loop for each frame that needs to be counted
     frames = frames or 1
     for _ = 1, frames do
@@ -72,6 +83,9 @@ function SpranimationTrack:AdvanceFrame(frames)
             segment = (self._currentSegmentIndex % #self.Spranimation._segmentTable) + 1
             self._currentSegmentIndex = segment
             self.CurrentFrame = self:_getCurrentSegment().StartFrame
+
+            -- fire SegmentReached
+            self.SegmentReached:Fire(segment.Name)
 
             -- if the user has a signal attatched to the loading of the new segment, it should fire
             local segSignal = self._segmentSignalTable[segment.Name]
@@ -85,6 +99,16 @@ function SpranimationTrack:AdvanceFrame(frames)
 
         -- math.sign accounts for frames going in reverse
         self.CurrentFrame += math.sign(segment.EndFrame - segment.StartFrame)
+
+        -- check if this is the last frame
+        if self.CurrentFrame == self.Spranimation.LastFrame and
+           self:_getCurrentSegment() == self.Spranimation._segmentTable[#self.Spranimation._segmentTable]
+        then
+            -- stop playing if not Looped
+            if not self.Looped then
+                self:Pause()
+            end
+        end
 
     end
 end
@@ -159,6 +183,7 @@ function SpranimationTrack:Stop()
 
     self._currentSegmentIndex = 1
     self.CurrentFrame = self.Spranimation._segmentTable[1].StartFrame
+    self.Stopped:Fire()
 end
 
 
