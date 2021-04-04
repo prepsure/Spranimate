@@ -74,6 +74,58 @@ function SpranimationTrack:_getReachedSignal(index)
 end
 
 
+function SpranimationTrack:_setFrame(frame)
+    if frame == self.CurrentFrame then
+        return
+    end
+
+    self.CurrentFrame = frame
+
+    -- fire FrameReached
+    self.FrameReached:Fire(frame)
+
+    -- if a signal is attatched to the loading of the frame, it should fire
+    local frameSignal = self._signalTable[frame]
+    if frameSignal then
+        frameSignal:Fire(frame)
+    end
+
+    -- if first frame and first segment, fire DidLoop
+    if self.CurrentFrame == self.Spranimation.FirstFrame and
+       self:_getCurrentSegment() == self.Spranimation._segmentTable[1]
+    then
+        self.DidLoop:Fire()
+    end
+
+    -- if last frame and last segment, stop playing if Looped is false
+    if not self.Looped and
+       self.CurrentFrame == self.Spranimation.LastFrame and
+       self:_getCurrentSegment() == self.Spranimation._segmentTable[#self.Spranimation._segmentTable]
+    then
+        self:Pause()
+    end
+end
+
+
+function SpranimationTrack:_setSegmentIndex(index)
+    if index == self._currentSegmentIndex then
+        return
+    end
+
+    self._currentSegmentIndex = index
+    local segment = self:_getCurrentSegment()
+
+    -- fire SegmentReached
+    self.SegmentReached:Fire(segment.Name)
+
+    -- if a signal is attatched to the loading of the new segment, it should fire
+    local segSignal = self._signalTable[segment.Name]
+    if segSignal then
+        segSignal:Fire(segment.Name)
+    end
+end
+
+
 ---------- public functions ----------
 
 
@@ -83,57 +135,18 @@ end
 function SpranimationTrack:AdvanceFrame(frames)
     local segment = self:_getCurrentSegment()
 
-    -- if first frame, fire DidLoop
-    if self.CurrentFrame == self.Spranimation.FirstFrame and
-       self:_getCurrentSegment() == self.Spranimation._segmentTable[1]
-    then
-        self.DidLoop:Fire()
-    end
-
     -- loop for each frame that needs to be counted
     frames = frames or 1
     for _ = 1, frames do
-
         -- if we're at the end of the segment, we have to jump to the next one
         if self.CurrentFrame == segment.EndFrame then
             -- get to the next segment using mods to loop back to the first if needed
-            segment = (self._currentSegmentIndex % #self.Spranimation._segmentTable) + 1
-            self._currentSegmentIndex = segment
-            self.CurrentFrame = self:_getCurrentSegment().StartFrame
-
-            -- fire SegmentReached
-            self.SegmentReached:Fire(segment.Name)
-
-            -- if a signal is attatched to the loading of the new segment, it should fire
-            local segSignal = self._signalTable[segment.Name]
-            if segSignal then
-                segSignal:Fire(segment.Name)
-            end
-
+            self:_setSegmentIndex((self._currentSegmentIndex % #self.Spranimation._segmentTable) + 1)
+            self:_setFrame(self:_getCurrentSegment().StartFrame)
         else
             -- math.sign accounts for frames going in reverse
-            self.CurrentFrame += math.sign(segment.EndFrame - segment.StartFrame)
-
-            -- fire FrameReached
-            self.FrameReached:Fire(self.CurrentFrame)
-
-            -- if a signal is attatched to the loading of the frame, it should fire
-            local frameSignal = self._signalTable[self.CurrentFrame]
-            if frameSignal then
-                frameSignal:Fire(self.CurrentFrame)
-            end
+            self:_setFrame(self.CurrentFrame + math.sign(segment.EndFrame - segment.StartFrame))
         end
-
-        -- check if this is the last frame
-        if self.CurrentFrame == self.Spranimation.LastFrame and
-           self:_getCurrentSegment() == self.Spranimation._segmentTable[#self.Spranimation._segmentTable]
-        then
-            -- stop playing if not Looped
-            if not self.Looped then
-                self:Pause()
-            end
-        end
-
     end
 end
 
@@ -143,7 +156,13 @@ end
 -- @return segmentSignal <Signal> - a signal that will fire when the segment switches to the named segment
 --                                - will fire for multiple segments with the same name
 
-SpranimationTrack.GetSegmentReachedSignal = SpranimationTrack._getReachedSignal
+function SpranimationTrack:GetSegmentReachedSignal(name)
+    if #self.Spranimation._segmentTable < 2 then
+        warn("GetSegmentReachedSignal will not fire when the SpranimationTrack has 1 segment. Consider using GetFrameReachedSignal instead.")
+    end
+
+    return self:_getReachedSignal(name)
+end
 
 
 --- gets a signal for a specific frame
@@ -178,8 +197,12 @@ end
 
 function SpranimationTrack:Seek(timePos)
     self.TimePosition = timePos
-    self.CurrentFrame = self.Spranimation:GetFrameAtTime(timePos)
-    return self.CurrentFrame
+
+    local frame, segIndex = self.Spranimation:GetFrameAndSegmentIndexAtTime(timePos)
+    self:_setFrame(frame)
+    self:_setSegmentIndex(segIndex)
+
+    return frame
 end
 
 
@@ -202,8 +225,9 @@ end
 function SpranimationTrack:Stop()
     self:Pause()
 
+    -- it's fine to not use _setFrame and _setSegmentIndex here since these shouldn't trigger FrameReached or SegmentReached
     self._currentSegmentIndex = 1
-    self.CurrentFrame = self.Spranimation._segmentTable[1].StartFrame
+    self.CurrentFrame = self.Spranimation.FirstFrame
     self.Stopped:Fire()
 end
 

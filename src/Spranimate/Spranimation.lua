@@ -59,17 +59,17 @@ function Spranimation.new(segmentTable, priority, looped)
 end
 
 
-function Spranimation:GetFrameAtTime(timePos)
+function Spranimation:GetFrameAndSegmentIndexAtTime(timePos)
     local totalTime = 0
 
-    for i, seg in pairs(self._segmentTable) do
+    for index, seg in pairs(self._segmentTable) do
 
         if totalTime + seg.Length > timePos then
             -- abs value for sequences that go backwards, +1 for inclusive counting
             local totalFrames = math.abs(seg.EndFrame - seg.StartFrame) + 1
             local lowest = math.min(seg.StartFrame, seg.EndFrame)
             -- the equation [% of frames * length = time until target] rearranged and using floor to get a frame:
-            return math.floor( (timePos - totalTime) * totalFrames / seg.Length ) + lowest
+            return math.floor( (timePos - totalTime) * totalFrames / seg.Length ) + lowest, index
         end
 
         totalTime += seg.Length
