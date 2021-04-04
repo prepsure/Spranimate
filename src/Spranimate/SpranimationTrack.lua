@@ -29,6 +29,8 @@ function SpranimationTrack.new(Spranimation)
 
     self.Speed = 1
     self.Length = Spranimation.Length
+    self.FrameCount = Spranimation.FrameCount
+
     self.IsPlaying = false
     self.TimePosition = 0
     self.CurrentFrame = Spranimation.FirstFrame
@@ -37,13 +39,14 @@ function SpranimationTrack.new(Spranimation)
     self.FlipY = false
 
     self.DidLoop = self._janitor:Add( Signal.new() )
+    self.FrameReached = self._janitor:Add( Signal.new() )
     self.SegmentReached = self._janitor:Add( Signal.new() )
     self.Stopped = self._janitor:Add( Signal.new() )
 
     -- private
     self._currentSegmentIndex = 1
     self._destroyed = false
-    self._segmentSignalTable = {}
+    self._signalTable = {}
 
     return self
 end
@@ -54,6 +57,19 @@ end
 
 function SpranimationTrack:_getCurrentSegment()
     return self.Spranimation._segmentTable[self._currentSegmentIndex]
+end
+
+
+function SpranimationTrack:_getReachedSignal(index)
+    -- check if a signal for that name already exists and return it if so
+    if self._signalTable[index] then
+        return self._signalTable[index]
+    end
+
+    -- create new signal with the index
+    local newSignal = self._janitor:Add( Signal.new() )
+    self._signalTable[index] = newSignal
+    return newSignal
 end
 
 
@@ -87,18 +103,25 @@ function SpranimationTrack:AdvanceFrame(frames)
             -- fire SegmentReached
             self.SegmentReached:Fire(segment.Name)
 
-            -- if the user has a signal attatched to the loading of the new segment, it should fire
-            local segSignal = self._segmentSignalTable[segment.Name]
+            -- if a signal is attatched to the loading of the new segment, it should fire
+            local segSignal = self._signalTable[segment.Name]
             if segSignal then
                 segSignal:Fire(segment.Name)
             end
 
-            -- go to the next frame
-            continue
-        end
+        else
+            -- math.sign accounts for frames going in reverse
+            self.CurrentFrame += math.sign(segment.EndFrame - segment.StartFrame)
 
-        -- math.sign accounts for frames going in reverse
-        self.CurrentFrame += math.sign(segment.EndFrame - segment.StartFrame)
+            -- fire FrameReached
+            self.FrameReached:Fire(self.CurrentFrame)
+
+            -- if a signal is attatched to the loading of the frame, it should fire
+            local frameSignal = self._signalTable[self.CurrentFrame]
+            if frameSignal then
+                frameSignal:Fire(self.CurrentFrame)
+            end
+        end
 
         -- check if this is the last frame
         if self.CurrentFrame == self.Spranimation.LastFrame and
@@ -115,21 +138,18 @@ end
 
 
 --- gets a signal for a specific segment name
--- @param   segmentName   <string>  - the name of the segment that the signal should fire for
--- @return  segmentSignal <Signal>  - a signal that will fire when the segment switches to the named segment
---                                  - will fire for multiple segments with the same name
+-- @param  segmentName   <string> - the name of the segment that the signal should fire for
+-- @return segmentSignal <Signal> - a signal that will fire when the segment switches to the named segment
+--                                - will fire for multiple segments with the same name
 
-function SpranimationTrack:GetSegmentReachedSignal(segmentName)
-    -- check if a signal for that name already exists and return it if so
-    if self._segmentSignalTable[segmentName] then
-        return self._segmentSignalTable[segmentName]
-    end
+SpranimationTrack.GetSegmentReachedSignal = SpranimationTrack._getReachedSignal
 
-    -- create new signal with the index of segmentName
-    local newSignal = self._janitor:Add( Signal.new() )
-    self._segmentSignalTable[segmentName] = newSignal
-    return newSignal
-end
+
+--- gets a signal for a specific frame
+-- @param  frame       <integer> - the name of the frame that the signal should fire for
+-- @return frameSignal <Signal>  - a signal that will fire when the animation advanced to the frame
+
+SpranimationTrack.GetFrameReachedSignal = SpranimationTrack._getReachedSignal
 
 
 --- gets the time the first segment with a name starts at
