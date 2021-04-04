@@ -13,6 +13,11 @@ Spranimator.__index = Spranimator
 Spranimator.ClassName = "Spranimator"
 
 
+---------- constructor ----------
+
+
+--- constructs a new Spranimator
+
 function Spranimator.new(gui)
 
     local self = setmetatable({}, Spranimator)
@@ -25,7 +30,8 @@ function Spranimator.new(gui)
 
     self.SpriteSize = gui:GetAttribute("SpriteSize")
     self.ImageSize = gui:GetAttribute("ImageSize")
-    self.SpranimationPlayed = self._janitor:Add( Signal.new() )
+
+    self.SpranimationSwitched = self._janitor:Add( Signal.new() )
 
     -- private
     self._tracks = {}
@@ -34,6 +40,9 @@ function Spranimator.new(gui)
     return self
 
 end
+
+
+---------- private functions ----------
 
 
 function Spranimator:_runSpranimations()
@@ -63,6 +72,15 @@ function Spranimator:_runSpranimations()
 end
 
 
+---------- public functions ----------
+
+
+--- sets the frame for the spritesheet which the Spranimator is playing on
+-- @param frame <integer> - the frame number starting from the upper left and continuing to the right and then down
+--                        - must be in the range [1, spriteCount]
+-- @param flipX <bool>    - whether or not to flip the frame horizontally
+-- @param flipY <bool>    - whether or not to flip the frame vertically
+
 function Spranimator:SetFrame(frame, flipX, flipY)
     local zeroIndexed = frame - 1
 
@@ -87,6 +105,8 @@ function Spranimator:SetFrame(frame, flipX, flipY)
 end
 
 
+--- gets all playing spranimationTracks (including ones that aren't setting the frame)
+
 function Spranimator:GetPlayingSpranimationTracks()
     local playingTracks = {}
 
@@ -100,14 +120,21 @@ function Spranimator:GetPlayingSpranimationTracks()
 end
 
 
-function Spranimator:LoadSpranimation(Spranimation)
-    local track = SpranimationTrack.new(Spranimation)
+--- loads a Spranimation into the Spranimator's queue
+-- @param  spranimation <Spranimation>      - the Spranimation to load
+-- @return track        <SpranimationTrack> - a SpranimationTrack based on the given Spranimation
+
+function Spranimator:LoadSpranimation(spranimation)
+    local track = SpranimationTrack.new(spranimation)
     self._janitor:Add(track)
 
     table.insert(self._tracks, track)
     return track
 end
 
+
+--- steps each loaded Spranimation a certain number of frames
+-- @param frames <integer> - the number of frames to step
 
 function Spranimator:StepSpranimations(frames)
     for _, t in pairs(self._tracks) do
@@ -116,10 +143,18 @@ function Spranimator:StepSpranimations(frames)
 end
 
 
+----------- roblox instance functions ----------
+
+
+--- copies the Spranimator, but not the loaded SpranimationTracks
+-- @return clone <Spranimator> - the copied Spranimator
+
 function Spranimator:Clone()
     return Spranimator.new(self.Adornee)
 end
 
+
+--- destroys the Spranimator, rendering it unusable
 
 function Spranimator:Destroy()
     self._janitor:Destroy()
