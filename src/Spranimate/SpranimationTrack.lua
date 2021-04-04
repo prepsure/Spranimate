@@ -28,18 +28,18 @@ function SpranimationTrack.new(Spranimation)
     self.Looped = Spranimation.Looped
     self.Priority = Spranimation.Priority
 
+    self.Speed = 1
     self.Length = Spranimation.Length
     self.IsPlaying = false
-    self.Speed = 1
+    self.TimePosition = 0
+    self.CurrentFrame = Spranimation.FirstFrame
 
-    self.CurrentFrame = Spranimation._segmentTable[1].StartFrame
     self.FlipX = false
     self.FlipY = false
 
     -- private
     self._currentSegmentIndex = 1
     self._destroyed = false
-    self._playThread = self:_makeSpranimationCoroutine()
     self._segmentSignalTable = {}
 
     return self
@@ -51,35 +51,6 @@ end
 
 function SpranimationTrack:_getCurrentSegment()
     return self.Spranimation._segmentTable[self._currentSegmentIndex]
-end
-
-
-function SpranimationTrack:_makeSpranimationCoroutine()
-    return coroutine.wrap(function()
-        repeat
-
-            if not self._isPlaying then
-                -- pause when not playing
-                coroutine.yield()
-                -- refresh loop when resuming
-            end
-
-            -- coroutine will only complete upon the instance being destroyed
-            if self._destroyed then
-                break
-            end
-
-            -- set next frame
-            self:AdvanceFrame()
-
-            -- wait for next frame (timing must be >=1/60 of a second)
-            local segment = self:_getCurrentSegment()
-            local framesInSegment = math.abs(segment.EndFrame - segment.StartFrame) + 1 -- inclusive countining :)
-            FastWait(segment.Length/framesInSegment/self.Speed) -- TODO a negative speed should play the animation backwards
-
-        until self._destroyed -- todo implement not looping
-
-    end)
 end
 
 
@@ -141,7 +112,6 @@ end
 --- gets the time the first segment with a name starts at
 -- @param  segmentName <string> - the name of the segment to get the time for
 -- @return time        <number> - the time position that the segment starts at
---                              - (may not be accurate if each frame has a time not divisible by 60)
 
 function SpranimationTrack:GetTimeOfSegment(segmentName)
     local totalTime = 0
@@ -158,18 +128,28 @@ function SpranimationTrack:GetTimeOfSegment(segmentName)
 end
 
 
+--- seeks to the frame of the given timestamp
+-- @param  timePos <number> - the time to seek to
+-- @return frame   <number> - the frame that was sought to
+
+function SpranimationTrack:Seek(timePos)
+    self.TimePosition = timePos
+    self.CurrentFrame = self.Spranimation:GetFrameAtTime()
+    return self.CurrentFrame
+end
+
+
 --- plays the spranimation track, starting from the current segment and frame
 
 function SpranimationTrack:Play()
-    self._isPlaying = true
-    self._playThread()
+    self.IsPlaying = true
 end
 
 
 --- stops the spranimation track, keeping the current segment and frame
 
 function SpranimationTrack:Pause()
-    self._isPlaying = false
+    self.IsPlaying = false
 end
 
 

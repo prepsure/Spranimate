@@ -6,8 +6,6 @@ local Spranimation = {}
 Spranimation.__index = Spranimation
 Spranimation.ClassName = "Spranimation"
 
-Spranimation.writableProps = {"Looped", "Priority"}
-
 
 local function giveSegmentsDefaultProps(segmentTable)
     for i, segment in pairs(segmentTable) do
@@ -46,17 +44,35 @@ function Spranimation.new(segmentTable, priority, looped)
     self.Looped = not not looped
 
     self.Length, self.FrameCount = getLengthAndFrameCount()
+    self.FirstFrame = self._segmentTable[1].StartFrame
+    self.LastFrame = self._segmentTable[#self._segmentTable].EndFrame
 
     return setmetatable({}, {
         __index = self,
-        __newindex = function(_, index, value)
-            if not table.find(self.writableProps, index) then
-                error("cannot write to " .. index .. " to Spranimation")
-            end
-
-            self[index] = value
+        __newindex = function()
+            error("Spranimation is readonly, modify SpranimationTrack instead")
         end,
     })
+end
+
+
+function Spranimation:GetFrameAtTime(timePos)
+    local totalTime = 0
+
+    for i, seg in pairs(self._segmentTable) do
+
+        if totalTime + seg.Length > timePos then
+            -- abs value for sequences that go backwards, +1 for inclusive counting
+            local totalFrames = math.abs(seg.EndFrame - seg.StartFrame) + 1
+            -- the equation [% of frames * length = time until target] rearranged and using floor to get a frame:
+            return math.floor( (timePos - totalTime) * totalFrames / seg.Length ) + seg.StartFrame
+        end
+
+        totalTime += seg.Length
+    end
+
+    warn("no frame found for time: " .. timePos .. " returning last frame")
+    return self.LastFrame
 end
 
 

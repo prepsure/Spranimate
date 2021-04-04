@@ -29,32 +29,37 @@ function Spranimator.new(gui)
 
     -- private
     self._tracks = {}
-
-    self._setFrameCxn = self._janitor:Add(
-        RunService.Heartbeat:Connect(function()
-            self:_setHighestPriorityPlayingFrame()
-        end)
-    )
+    self:_runSpranimations()
 
     return self
 
 end
 
 
-function Spranimator:_setHighestPriorityPlayingFrame()
-    if #self._tracks == 0 then
-        return
-    end
+function Spranimator:_runSpranimations()
+    local onTop = self._tracks[1]
 
-    local highest = self._tracks[1]
+    self._janitor:Add(
+        RunService.Heartbeat:Connect(function(dt)
+            local lastOnTop = onTop
 
-    for i, track in pairs(self._tracks) do
-        if track.IsPlaying and (track.Priority.Value > highest.Priority.Value) then
-            highest = track
-        end
-    end
+            for i, track in pairs(self._tracks) do
+                if not track.IsPlaying then
+                    continue
+                end
 
-    self:SetFrame(highest.CurrentFrame, highest.FlipX, highest.FlipY)
+                track:Seek((track.TimePosition + dt) % track.Length)
+
+                onTop = (track.Priority.Value > onTop.Priority.Value) and track or onTop
+            end
+
+            self:SetFrame(onTop.CurrentFrame, onTop.FlipX, onTop.FlipY)
+
+            if onTop ~= lastOnTop then
+                self.SpranimationSwitched:Fire()
+            end
+        end)
+    )
 end
 
 
