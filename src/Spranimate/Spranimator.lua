@@ -53,7 +53,17 @@ function Spranimator:_runSpranimations()
             local lastOnTop = onTop
             onTop = nil
 
+            -- tracks to remove from the queue
+            local toRemove = {}
+
             for i, track in pairs(self._tracks) do
+
+                -- if track is destroyed, add it to the list and do nothing
+                if track._destroyed then
+                    table.insert(toRemove, i)
+                    continue
+                end
+
                 if not track.IsPlaying then
                     continue
                 end
@@ -65,13 +75,21 @@ function Spranimator:_runSpranimations()
                 end
             end
 
+            -- remove tracks that are destroyed
+            for j = #toRemove, 1, -1 do
+                table.remove(self._tracks, toRemove[j])
+            end
+
+            -- set the frame with the highest priority on top
             if onTop then
                 self:SetFrame(onTop.CurrentFrame, onTop.FlipX, onTop.FlipY)
             end
 
+            -- fire SpranimationSwitched if needed
             if onTop ~= lastOnTop then
                 self.SpranimationSwitched:Fire(onTop)
             end
+
         end)
     )
 end

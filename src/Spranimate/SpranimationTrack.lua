@@ -246,10 +246,11 @@ end
 --- destroys the SpranimationTrack, rendering it unusable
 
 function SpranimationTrack:Destroy()
-    self._destroyed = true
     self._janitor:Destroy()
     table.clear(self)
     setmetatable(self, nil)
+
+    self._destroyed = true
 end
 
 
