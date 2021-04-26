@@ -91,16 +91,18 @@ function SpranimationTrack:_setFrame(frame)
     end
 
     -- if first frame and first segment, fire DidLoop
-    if self.CurrentFrame == self.Spranimation.FirstFrame and
-       self:_getCurrentSegment() == self.Spranimation._segmentTable[1]
+    if
+        self.CurrentFrame == self.Spranimation.FirstFrame
+        and self:_getCurrentSegment() == self.Spranimation._segmentTable[1]
     then
         self.DidLoop:Fire()
     end
 
     -- if last frame and last segment, stop playing if Looped is false
-    if not self.Looped and
-       self.CurrentFrame == self.Spranimation.LastFrame and
-       self:_getCurrentSegment() == self.Spranimation._segmentTable[#self.Spranimation._segmentTable]
+    if
+        not self.Looped
+        and self.CurrentFrame == self.Spranimation.LastFrame
+        and self:_getCurrentSegment() == self.Spranimation._segmentTable[#self.Spranimation._segmentTable]
     then
         self:Pause()
     end
@@ -158,7 +160,7 @@ end
 
 function SpranimationTrack:GetSegmentReachedSignal(name)
     if #self.Spranimation._segmentTable < 2 then
-        warn("GetSegmentReachedSignal will not fire when the SpranimationTrack has 1 segment. Consider using GetFrameReachedSignal instead.")
+        warn("GetSegmentReachedSignal will not fire when the SpranimationTrack has 1 segment. Consider using DidLoop instead.")
     end
 
     return self:_getReachedSignal(name)
@@ -172,7 +174,7 @@ end
 SpranimationTrack.GetFrameReachedSignal = SpranimationTrack._getReachedSignal
 
 
---- gets the time the first segment with a name starts at
+--- gets the time the first segment with a name starts at, given that speed = 1
 -- @param  segmentName <string> - the name of the segment to get the time for
 -- @return time        <number> - the time position that the segment starts at
 
