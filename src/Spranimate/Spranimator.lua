@@ -68,7 +68,7 @@ function Spranimator:_runSpranimations()
                     continue
                 end
 
-                track:Seek((track.TimePosition + dt) % track.Length)
+                track:Seek((track.TimePosition + dt * track.Speed) % track.Length)
 
                 if (not onTop) or (track.Priority.Value > onTop.Priority.Value) then
                     onTop = track
